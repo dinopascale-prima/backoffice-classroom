@@ -5,9 +5,9 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npm run run:web && npm run:server",
-    "run:web": "npx parcel src/index.html",
-    "run:server": "cd pokeapi-cache-server && DELAY=1000 npm start"
+    "dev": "concurrently \"npm run serve:server\" \"npm run serve:web\"",
+    "serve:web": "npx parcel src/index.html",
+    "serve:server": "cd pokeapi-cache-server && DELAY=1000 npm start"
   },
   "author": "",
   "license": "ISC",
