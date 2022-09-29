@@ -5,12 +5,15 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run:web": "npx parcel src/index.html"
+    "dev": "npm run run:web && npm run:server",
+    "run:web": "npx parcel src/index.html",
+    "run:server": "cd pokeapi-cache-server && DELAY=1000 npm start"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@parcel/transformer-elm": "^2.7.0",
+    "concurrently": "^7.4.0",
     "elm": "^0.19.1-5",
     "parcel": "^2.7.0"
   }
