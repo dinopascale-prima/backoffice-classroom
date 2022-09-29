@@ -1,0 +1,4 @@
+[submodule "pokelm/pokeapi-cache-server"]
+	path = pokelm/pokeapi-cache-server
+	url = git@github.com:ryannhg/pokeapi-cache-server.git
+	ignore = untracked
