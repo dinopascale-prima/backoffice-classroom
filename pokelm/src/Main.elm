@@ -1,4 +1,7 @@
 module Main exposing (..)
+import Browser
+import Html exposing (text)
+import Html exposing (Html)
 
 {-|
 
@@ -17,9 +20,41 @@ module Main exposing (..)
 
 -}
 
-import Html
+type alias Pokemon =
+    { id : Int
+    , name : String
+    , image : String
+    }
 
+type alias Model = {
+    pokemons: List Pokemon
+    }
 
-main : Html.Html msg
+type Msg = Something Pokemon | Other
+
+initialModel : () -> (Model, Cmd Msg)
+initialModel _= ({pokemons= [] }, Cmd.none)
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+    case msg of
+        Something _-> ({model | pokemons = []}, Cmd.none)
+        Other -> (model,  Cmd.none)
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
+
 main =
-    Html.text "Hello World"
+    Browser.element({ 
+        init=initialModel, 
+        view=view, 
+        update=update, 
+        subscriptions=subscriptions})
+
+
+
+view : Model -> Html Msg
+view model =
+    Html.div [] [text "Hello Moon"]
+
