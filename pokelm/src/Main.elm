@@ -1,10 +1,11 @@
 module Main exposing (..)
 
 import Browser
-import Http
-import Html exposing (Html, img, table, tbody, td, text, th, thead, tr, button, div)
+import Html exposing (Html, button, div, img, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (src)
 import Html.Events exposing (onClick)
+import Http
+import Json.Decode
 
 
 {-|
@@ -24,16 +25,17 @@ import Html.Events exposing (onClick)
 
 -}
 type alias Pokemon =
-    { id : Int
-    , name : String
-    , image : String
+    { -- id : Int,
+      name : String
+
+    -- , image : String
     }
 
-type PokemonList 
-    = Initial
-    | Loading 
-    | Done (Result Http.Error (List Pokemon))
 
+type PokemonList
+    = Initial
+    | Loading
+    | Done (Result Http.Error (List Pokemon))
 
 
 type alias Model =
@@ -55,10 +57,21 @@ initialModel _ =
 
 getPokemons : Cmd Msg
 getPokemons =
-  Http.get
-    { url = "http://localhost:5000/api/v2/pokemon?limit=150"
-    , expect = Http.expectJson GotPokemons
-    }
+    Http.get
+        { url = "http://localhost:5000/api/v2/pokemon?limit=150"
+        , expect = Http.expectJson GotPokemons decoder
+        }
+
+
+decoder : Json.Decode.Decoder (List Pokemon)
+decoder =
+    Json.Decode.field "results" (Json.Decode.list decoderPokemon)
+
+
+decoderPokemon : Json.Decode.Decoder Pokemon
+decoderPokemon =
+    Json.Decode.map Pokemon (Json.Decode.field "name" Json.Decode.string)
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -66,7 +79,14 @@ update msg model =
         Something _ ->
             ( { model | pokemons = Initial }, Cmd.none )
 
-        RequestPokemons -> ( {model | pokemons = Loading}, Cmd.none )
+        RequestPokemons ->
+            ( { model | pokemons = Loading }, getPokemons )
+
+        GotPokemons (Ok pokemons) ->
+            ( { model | pokemons = Done (Ok pokemons) }, Cmd.none )
+
+        GotPokemons (Err e) ->
+            ( { model | pokemons = Done (Err e) }, Cmd.none )
 
         Other ->
             ( model, Cmd.none )
@@ -90,7 +110,7 @@ main =
 view : Model -> Html Msg
 view model =
     case model.pokemons of
-        Done (Ok pokemons) -> 
+        Done (Ok pokemons) ->
             div []
                 [ table
                     []
@@ -106,15 +126,21 @@ view model =
                     , tbody [] (List.map renderPokemonRows pokemons)
                     ]
                 ]
-        Initial -> div [][button [onClick RequestPokemons][text "Click here"]]
-        Loading -> div [][text "Loading..."]
-        Done (Err e) -> div [][text "e"]
+
+        Initial ->
+            div [] [ button [ onClick RequestPokemons ] [ text "Click here" ] ]
+
+        Loading ->
+            div [] [ text "Loading..." ]
+
+        Done (Err e) ->
+            div [] [ text "e" ]
 
 
 renderPokemonRows : Pokemon -> Html Msg
-renderPokemonRows { id, name, image } =
+renderPokemonRows { name } =
     tr []
-        [ td [] [ text <| String.fromInt id ]
+        [ td [] [ text "1" ]
         , td [] [ text name ]
-        , td [] [ img [ src image ] [] ]
+        , td [] [ img [ src "" ] [] ]
         ]
