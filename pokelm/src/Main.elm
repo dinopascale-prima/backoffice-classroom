@@ -1,9 +1,10 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, img, table, tbody, td, text, th, thead, tr)
+import Http
+import Html exposing (Html, img, table, tbody, td, text, th, thead, tr, button, div)
 import Html.Attributes exposing (src)
-import List exposing (head)
+import Html.Events exposing (onClick)
 
 
 {-|
@@ -28,27 +29,44 @@ type alias Pokemon =
     , image : String
     }
 
+type PokemonList 
+    = Initial
+    | Loading 
+    | Done (Result Http.Error (List Pokemon))
+
+
 
 type alias Model =
-    { pokemons : List Pokemon
+    { pokemons : PokemonList
     }
 
 
 type Msg
     = Something Pokemon
+    | RequestPokemons
     | Other
+    | GotPokemons (Result Http.Error (List Pokemon))
 
 
 initialModel : () -> ( Model, Cmd Msg )
 initialModel _ =
-    ( { pokemons = [ { id = 1, name = "Pikaciu", image = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" } ] }, Cmd.none )
+    ( { pokemons = Initial }, Cmd.none )
 
+
+getPokemons : Cmd Msg
+getPokemons =
+  Http.get
+    { url = "http://localhost:5000/api/v2/pokemon?limit=150"
+    , expect = Http.expectJson GotPokemons
+    }
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Something _ ->
-            ( { model | pokemons = [] }, Cmd.none )
+            ( { model | pokemons = Initial }, Cmd.none )
+
+        RequestPokemons -> ( {model | pokemons = Loading}, Cmd.none )
 
         Other ->
             ( model, Cmd.none )
@@ -59,6 +77,7 @@ subscriptions _ =
     Sub.none
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = initialModel
@@ -70,27 +89,31 @@ main =
 
 view : Model -> Html Msg
 view model =
-    Html.div []
-        [ table
-            []
-            [ thead
-                []
-                [ tr
+    case model.pokemons of
+        Done (Ok pokemons) -> 
+            div []
+                [ table
                     []
-                    [ th [] [ text "Index" ]
-                    , th [] [ text "Nome" ]
-                    , th [] [ text "Immagine" ]
+                    [ thead
+                        []
+                        [ tr
+                            []
+                            [ th [] [ text "Index" ]
+                            , th [] [ text "Nome" ]
+                            , th [] [ text "Immagine" ]
+                            ]
+                        ]
+                    , tbody [] (List.map renderPokemonRows pokemons)
                     ]
                 ]
-            , tbody [] (List.map renderPokemonRows model.pokemons)
-            ]
-        ]
+        Initial -> div [][button [onClick RequestPokemons][text "Click here"]]
+        Loading -> div [][text "Loading..."]
+        Done (Err e) -> div [][text "e"]
 
 
 renderPokemonRows : Pokemon -> Html Msg
 renderPokemonRows { id, name, image } =
     tr []
-        -- [ td [] [ id |> String.fromInt |> text ]
         [ td [] [ text <| String.fromInt id ]
         , td [] [ text name ]
         , td [] [ img [ src image ] [] ]
